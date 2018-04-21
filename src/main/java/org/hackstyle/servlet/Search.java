@@ -6,7 +6,7 @@ import com.google.gson.Gson;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;
-import java.sql.SQLException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -16,6 +16,8 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.hackstyle.crawler.Crawler;
+import org.hackstyle.servico.Servico;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -39,21 +41,19 @@ public class Search extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
         PrintWriter out = response.getWriter();
 
-        DAOProduto dAOProduto = new DAOProduto();
+        
+/*        
+        Servico s = new Servico();
         try {
-            /*List<Produto> lista = dAOProduto.getAll();
-            for (Produto p : lista) {
-                
-                System.out.println(p.toString());
-                
-            }*/
-            System.out.println(dAOProduto.getByID("MLB1009501018"));
+            s.iniciaServico();
             
-        } catch (SQLException ex) {
-            Logger.getLogger(Search.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ClassNotFoundException ex) {
+        } catch (ParseException ex) {
             Logger.getLogger(Search.class.getName()).log(Level.SEVERE, null, ex);
         }
+        
+        System.exit(0);
+  */      
+        
         
         
         String keyword = request.getParameter("keyword");
@@ -90,16 +90,18 @@ public class Search extends HttpServlet {
             if (doc != null && doc.hasText()) {
 
                 Elements lis = doc.select(".results-item");
-
+                Crawler crawler = new Crawler();
+                
                 for (Element li : lis) {
 
-                    String id = li.select("div.rowItem").attr("id");
+                    /*String id = filtraID(li.select("div.rowItem").attr("id"));
                     Element title = li.select(".item__title .main-title").first();
                     Element price = li.select(".item__price .price__fraction").first();
-                    Element vendidos = li.select(".item__condition").first();
+                    Element vendidos = li.select(".item__condition").first();*/
+                    
                     String link = li.select(".item__info-title").attr("href");
 
-                    Produto p = new Produto();
+                    /*Produto p = new Produto();
                     p.setId(id);
                     p.setNome(title.text());
                     p.setPreco(Float.parseFloat(price.text()));
@@ -109,11 +111,13 @@ public class Search extends HttpServlet {
                     String vendedor = getNomeVendedor(p);
                     if (vendedor != null)
                         p.setNomeVendedor(vendedor);
+                    */
                     
-                    lista.add(p);
+                    Produto produto = crawler.consultaProduto(link);                    
+                    lista.add(produto);
                     
                     DAOProduto dao = new DAOProduto();
-                    dao.insert(p);
+                    dao.insert(produto);
                 }
 
                 Element pager = doc.select("li.pagination__next").first();
@@ -135,6 +139,7 @@ public class Search extends HttpServlet {
         return null;
     }
 
+    
     private String getQuantidade(String item) {
 
         StringBuilder sb = new StringBuilder();
@@ -155,6 +160,7 @@ public class Search extends HttpServlet {
         return sb.toString();
     }
 
+    
     private String getNomeVendedor(Produto produto) {
 
         try {
@@ -179,6 +185,19 @@ public class Search extends HttpServlet {
 
         return null;
     }
+    
+    private String filtraID(String id) {
+        
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < id.length(); i++) {
+
+            char chr = id.charAt(i);
+            if (chr >= '0' && chr <= '9') {
+                sb.append(chr);
+            }
+        }
+        return sb.toString();        
+    }
 }
 
 
@@ -189,24 +208,26 @@ public class Search extends HttpServlet {
 /* tabela produtos
 
 CREATE TABLE produtos (
-    id varchar(32) not null, 
-    nome varchar(128) not null, 
-    preco real not null, 
-    qtde_vendidos integer not null, 
-    link varchar(256) not null, 
-    id_vendedor int not null,
-    data_cadastro date not null,
-    PRIMARY KEY(id));
+    id VARCHAR(32) NOT NULL PRIMARY KEY, 
+    nome VARCHAR(128) NOT NULL, 
+    preco REAL NOT NULL, 
+    qtde_vendidos INTEGER NOT NULL, 
+    link VARCHAR(256) NOT NULL, 
+    id_vendedor INTEGER NOT NULL,
+    data_cadastro DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 
 SELECT id, nome, preco, qtde_vendidos, link, id_vendedor, data_cadastro FROM produtos;
 
+
 CREATE TABLE acompanhamento (
-    id integer not null autoincrement, 
-    id_produto varchar(32) not null, 
-    data_consulta datetime not null, 
-    preco real not null, 
-    qtde_vendidos int not null,
-    PRIMARY KEY(id));
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, 
+    id_produto VARCHAR(32) NOT NULL,  
+    preco REAL NOT NULL, 
+    qtde_vendidos INTEGER NOT NULL,
+    data DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 
 CREATE TABLE vendedor (id int not null primary key, nome varchar(64) not null, data_cadastro datetime);
 

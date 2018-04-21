@@ -42,4 +42,9 @@ public class Acompanhamento {
     }
     
     
+    public String toString() {
+        
+        return id + " - " + preco + " - " + qtdeVendidos + " - " + data;
+    }
+    
 }

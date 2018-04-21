@@ -15,7 +15,7 @@ public class DAOAcompanhamento {
     public List<Acompanhamento> getById(String id) throws SQLException, ClassNotFoundException {
         
         Connection conn = SQLite.getInstance().getConnection();
-        String query = "SELECT id_produto, data_consulta, preco, qtde_vendidos FROM acompanhamento WHERE id_produto = ?";
+        String query = "SELECT id_produto, preco, qtde_vendidos, data_consulta FROM acompanhamento WHERE id_produto = ?";
         
         PreparedStatement stmt = conn.prepareStatement(query);
         stmt.setString(1, id);
@@ -30,7 +30,8 @@ public class DAOAcompanhamento {
             acompanhamento.setId(rs.getString("id"));
             acompanhamento.setData(rs.getDate("data_consulta"));
             acompanhamento.setPreco(rs.getDouble("preco"));
-            acompanhamento.setQtdeVendidos(rs.getInt("qtde_vendidos"));            
+            acompanhamento.setQtdeVendidos(rs.getInt("qtde_vendidos"));  
+            acompanhamento.setData(rs.getDate("data"));
             
             listaAcompanhamento.add(acompanhamento);            
         }
@@ -42,14 +43,13 @@ public class DAOAcompanhamento {
     public void insert(Acompanhamento acompanhamento) throws SQLException, ClassNotFoundException {
         
         Connection conn = SQLite.getInstance().getConnection();
-        String query = "INSERT INTO acompanhamento (id_produto, data_consulta, preco, qtde_vendidos) " +
-                "VALUES (?,?,?,?)";
+        String query = "INSERT INTO acompanhamento (id_produto, preco, qtde_vendidos) " +
+                "VALUES (?,?,?)";
         
         PreparedStatement stmt = conn.prepareStatement(query);
         stmt.setString(1, acompanhamento.getId());
-        stmt.setDate(2, new java.sql.Date(acompanhamento.getData().getTime()));
-        stmt.setDouble(3, acompanhamento.getPreco());
-        stmt.setInt(4, acompanhamento.getQtdeVendidos());
+        stmt.setDouble(2, acompanhamento.getPreco());
+        stmt.setInt(3, acompanhamento.getQtdeVendidos());
         
         stmt.executeUpdate();
     }

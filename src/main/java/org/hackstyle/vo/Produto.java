@@ -1,5 +1,7 @@
 package org.hackstyle.vo;
 
+import java.util.Date;
+
 public class Produto {
     
     private String id;
@@ -8,6 +10,7 @@ public class Produto {
     private int qtdeVendidos;
     private String link;
     private String nomeVendedor;
+    private Date dataCadastro;
 
     public String getId() {
         return id;
@@ -56,6 +59,15 @@ public class Produto {
     public void setNomeVendedor(String nomeVendedor) {
         this.nomeVendedor = nomeVendedor;
     }
+
+    public Date getDataCadastro() {
+        return dataCadastro;
+    }
+
+    public void setDataCadastro(Date dataCadastro) {
+        this.dataCadastro = dataCadastro;
+    }
+    
     
     @Override
     public String toString() {
