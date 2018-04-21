@@ -1,16 +1,33 @@
 package org.hackstyle.crawler;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import org.hackstyle.vo.Acompanhamento;
 import org.hackstyle.vo.Produto;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 public class Crawler {
 
     
-    public Produto consultaProduto(String link) {
+    public List<Produto> pesquisaProduto(String produto) {
+
+        List<Produto> lista = new ArrayList();
+
+        String next = getListagemProdutos("https://lista.mercadolivre.com.br/" + produto, lista);
+        while (next != null) {
+            next = getListagemProdutos(next, lista);
+        }
+
+        return lista;
+    }
+
     
+    public Produto consultaProduto(String link) {
+
         try {
 
             Document doc = Jsoup.connect(link).get();
@@ -23,8 +40,7 @@ public class Crawler {
                 String linkVendedor = doc.select(".reputation-view-more").first().attr("href");
                 String nomeVendedor = new URL(linkVendedor).getPath();
                 nomeVendedor = nomeVendedor.substring(1, nomeVendedor.length());
-                
-                
+
                 Produto produto = new Produto();
                 produto.setId(id);
                 produto.setNome(nome);
@@ -42,9 +58,9 @@ public class Crawler {
 
         }
 
-        return null;        
+        return null;
     }
-    
+
     public Acompanhamento consultaAcompanhamento(String link) {
 
         try {
@@ -99,4 +115,45 @@ public class Crawler {
         return id.substring(1, id.length());
     }
 
+    private String getListagemProdutos(String url, List<Produto> lista) {
+
+        try {
+
+            Document doc = Jsoup.connect(url).get();
+            if (doc != null && doc.hasText()) {
+
+                Elements lis = doc.select(".results-item");
+                Crawler crawler = new Crawler();
+
+                for (Element li : lis) {
+
+                    /*String id = filtraID(li.select("div.rowItem").attr("id"));
+                    Element title = li.select(".item__title .main-title").first();
+                    Element price = li.select(".item__price .price__fraction").first();
+                    Element vendidos = li.select(".item__condition").first();*/
+                    String link = li.select(".item__info-title").attr("href");
+
+                    Produto produto = crawler.consultaProduto(link);
+                    lista.add(produto);
+                }
+
+                Element pager = doc.select("li.pagination__next").first();
+                if (pager != null) {
+                    String link = pager.select("a").attr("href");
+
+                    if (link.equals("#")) {
+                        return null;
+                    } else {
+                        return link;
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+
+        }
+
+        return null;
+    }
 }
