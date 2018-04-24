@@ -1,8 +1,12 @@
 package org.hackstyle.crawler;
 
+import java.io.IOException;
 import java.net.URL;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.hackstyle.vo.Acompanhamento;
 import org.hackstyle.vo.Produto;
 import org.jsoup.Jsoup;
@@ -12,7 +16,6 @@ import org.jsoup.select.Elements;
 
 public class Crawler {
 
-    
     public List<Produto> pesquisaProduto(String produto) {
 
         List<Produto> lista = new ArrayList();
@@ -25,7 +28,6 @@ public class Crawler {
         return lista;
     }
 
-    
     public Produto consultaProduto(String link) {
 
         try {
@@ -33,6 +35,7 @@ public class Crawler {
             Document doc = Jsoup.connect(link).get();
             if (doc != null && doc.hasText()) {
 
+                /* checar valores */
                 String id = filtraID(doc.select("span.item-info__id-number").first().text());
                 String nome = doc.select("h1.item-title__primary").first().text();
                 String preco = doc.select("span.price-tag-fraction").first().text();
@@ -49,12 +52,12 @@ public class Crawler {
                 produto.setQtdeVendidos(Integer.parseInt(qtdeVendidos));
                 produto.setNomeVendedor(nomeVendedor);
 
-                System.out.println("Crawler.getProduto() -> " + produto);
+                System.out.println("Crawler.consultaProduto() -> " + produto);
                 return produto;
             }
 
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
+        } catch (IOException e) {
+            System.out.println("IOException: " + e.getMessage());
 
         }
 
@@ -122,36 +125,40 @@ public class Crawler {
             Document doc = Jsoup.connect(url).get();
             if (doc != null && doc.hasText()) {
 
-                Elements lis = doc.select(".results-item");
                 Crawler crawler = new Crawler();
 
-                for (Element li : lis) {
+                Elements elements = doc.select(".results-item");
+                if (elements.size() > 0) {
 
-                    /*String id = filtraID(li.select("div.rowItem").attr("id"));
-                    Element title = li.select(".item__title .main-title").first();
-                    Element price = li.select(".item__price .price__fraction").first();
-                    Element vendidos = li.select(".item__condition").first();*/
-                    String link = li.select(".item__info-title").attr("href");
+                    for (Element el : elements) {
 
-                    Produto produto = crawler.consultaProduto(link);
-                    lista.add(produto);
-                }
+                        Element el_link = el.select(".item__info-title").first();
+                        if (el_link != null) {
 
-                Element pager = doc.select("li.pagination__next").first();
-                if (pager != null) {
-                    String link = pager.select("a").attr("href");
+                            String link = el.select(".item__info-title").attr("href");
 
-                    if (link.equals("#")) {
-                        return null;
-                    } else {
-                        return link;
+                            Produto produto = crawler.consultaProduto(link);
+                            if (produto != null) {
+                                lista.add(produto);
+                            }
+                        }
                     }
+
+                    Element pager = doc.select("li.pagination__next").first();
+                    if (pager != null) {
+
+                        String link = pager.select("a").attr("href");
+
+                        if (!link.equals("#")) {
+                            return link;
+                        }
+                    }
+
                 }
             }
 
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-
+        } catch (IOException e) {
+            System.out.println("IOException: " + e.getMessage());
         }
 
         return null;
